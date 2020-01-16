@@ -1,0 +1,16 @@
+*.egg-info*
+*work*
+*__pycache__*
+*.pdf
+*.png
+*write_data*
+*~
+*.pyc
+*.html
+*.out
+*DS_Store*
+*_build*
+.vscode/
+*.stl
+*.csv
+*optimization_output.txt*
