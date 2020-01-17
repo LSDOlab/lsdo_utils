@@ -5,59 +5,37 @@ from lsdo_utils.miscellaneous_functions.process_options import name_types, get_n
 from lsdo_utils.miscellaneous_functions.process_options import scalar_types, get_scalars_list
 
 
-class GeneralMultiplicationComp(ArrayExplicitComponent):
+class LinearCombinationComp(ArrayExplicitComponent):
 
     def array_initialize(self):
         self.options.declare('in_names', types=name_types)
         self.options.declare('out_name', types=str)
-        self.options.declare('powers', default=1., types=scalar_types)
-        self.options.declare('constant', default=1., types=(int, float, np.ndarray))
+        self.options.declare('coeffs', default=1., types=scalar_types)
+        self.options.declare('constant', default=0., types=(int, float, np.ndarray))
 
     def array_setup(self):
         self.options['in_names'] = get_names_list(self.options['in_names'])
-        self.options['powers'] = get_scalars_list(self.options['powers'], self.options['in_names'])
+        self.options['coeffs'] = get_scalars_list(self.options['coeffs'], self.options['in_names'])
 
         in_names = self.options['in_names']
         out_name = self.options['out_name']
-        powers = self.options['powers']
+        coeffs = self.options['coeffs']
         constant = self.options['constant']
 
         self.array_add_output(out_name)
-        for in_name in in_names:
+        for in_name, coeff in zip(in_names, coeffs):
             self.array_add_input(in_name)
-            self.array_declare_partials(out_name, in_name)
+            self.array_declare_partials(out_name, in_name, val=coeff)
 
     def compute(self, inputs, outputs):
         in_names = self.options['in_names']
         out_name = self.options['out_name']
-        powers = self.options['powers']
+        coeffs = self.options['coeffs']
         constant = self.options['constant']
         
         outputs[out_name] = constant
-        for in_name, power in zip(in_names, powers):
-            outputs[out_name] *= inputs[in_name] ** power
-
-    def compute_partials(self, inputs, partials):
-        in_names = self.options['in_names']
-        out_name = self.options['out_name']
-        powers = self.options['powers']
-        constant = self.options['constant']
-        
-        value = constant
-        for in_name, power in zip(in_names, powers):
-            value *= inputs[in_name] ** power
-
-        for in_name in in_names:
-            deriv = constant * np.ones(self.options['shape'])
-            for in_name2, power in zip(in_names, powers):
-                a = 1.
-                b = power
-                if in_name == in_name2:
-                    a = power
-                    b = power - 1.
-                deriv *= a * inputs[in_name2] ** b
-
-            partials[out_name, in_name] = deriv.flatten()
+        for in_name, coeff in zip(in_names, coeffs):
+            outputs[out_name] += coeff * inputs[in_name]
 
 
 if __name__ == '__main__':
@@ -74,11 +52,11 @@ if __name__ == '__main__':
     comp.add_output('z', np.random.rand(*shape))
     prob.model.add_subsystem('inputs_comp', comp, promotes=['*'])
 
-    comp = GeneralMultiplicationComp(
+    comp = LinearCombinationComp(
         shape=shape,
         in_names=['x', 'y', 'z'],
         out_name='f',
-        powers=[1., -2., 3.],
+        coeffs=[1., -2., 3.],
         constant=1.5,
     )
     prob.model.add_subsystem('comp', comp, promotes=['*'])
@@ -87,4 +65,4 @@ if __name__ == '__main__':
     prob.run_model()
     prob.check_partials(compact_print=True)
 
-    print(1.5 * prob['x'] ** 1 * prob['y'] ** -2 * prob['z'] ** 3 - prob['f'])
+    print(1.5 + 1 * prob['x'] - 2 * prob['y'] + 3 * prob['z'] - prob['f'])
