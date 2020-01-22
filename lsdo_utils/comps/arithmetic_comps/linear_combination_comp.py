@@ -14,8 +14,17 @@ class LinearCombinationComp(ArrayExplicitComponent):
         self.options.declare('constant', default=0., types=(int, float, np.ndarray))
 
     def array_setup(self):
-        self.options['in_names'] = get_names_list(self.options['in_names'])
-        self.options['coeffs'] = get_scalars_list(self.options['coeffs'], self.options['in_names'])
+        if isinstance(self.options['in_names'], dict):
+            in_names_dict = self.options['in_names']
+            self.options['in_names'] = []
+            self.options['coeffs'] = []
+            for in_name in in_names_dict:
+                coeff = in_names_dict[in_name]
+                self.options['in_names'].append(in_name)
+                self.options['coeffs'].append(coeff)
+        else:
+            self.options['in_names'] = get_names_list(self.options['in_names'])
+            self.options['coeffs'] = get_scalars_list(self.options['coeffs'], self.options['in_names'])
 
         in_names = self.options['in_names']
         out_name = self.options['out_name']

@@ -8,14 +8,23 @@ from lsdo_utils.miscellaneous_functions.process_options import scalar_types, get
 class PowerCombinationComp(ArrayExplicitComponent):
 
     def array_initialize(self):
-        self.options.declare('in_names', types=name_types)
+        self.options.declare('in_names', types=(dict, name_types))
         self.options.declare('out_name', types=str)
         self.options.declare('powers', default=1., types=scalar_types)
         self.options.declare('constant', default=1., types=(int, float, np.ndarray))
 
     def array_setup(self):
-        self.options['in_names'] = get_names_list(self.options['in_names'])
-        self.options['powers'] = get_scalars_list(self.options['powers'], self.options['in_names'])
+        if isinstance(self.options['in_names'], dict):
+            in_names_dict = self.options['in_names']
+            self.options['in_names'] = []
+            self.options['powers'] = []
+            for in_name in in_names_dict:
+                power = in_names_dict[in_name]
+                self.options['in_names'].append(in_name)
+                self.options['powers'].append(power)
+        else:
+            self.options['in_names'] = get_names_list(self.options['in_names'])
+            self.options['powers'] = get_scalars_list(self.options['powers'], self.options['in_names'])
 
         in_names = self.options['in_names']
         out_name = self.options['out_name']
