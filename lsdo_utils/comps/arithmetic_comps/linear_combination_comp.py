@@ -8,18 +8,23 @@ from lsdo_utils.miscellaneous_functions.process_options import scalar_types, get
 class LinearCombinationComp(ArrayExplicitComponent):
 
     def array_initialize(self):
-        self.options.declare('in_names', types=name_types)
         self.options.declare('out_name', types=str)
+        self.options.declare('in_names', default=None, types=name_types, allow_none=True)
         self.options.declare('coeffs', default=1., types=scalar_types)
+        self.options.declare('coeffs_dict', default=None, types=dict, allow_none=True)
         self.options.declare('constant', default=0., types=(int, float, np.ndarray))
 
+    def post_initialize(self):
+        pass
+
     def array_setup(self):
-        if isinstance(self.options['in_names'], dict):
-            in_names_dict = self.options['in_names']
+        self.post_initialize()
+
+        if self.options['coeffs_dict']:
             self.options['in_names'] = []
             self.options['coeffs'] = []
-            for in_name in in_names_dict:
-                coeff = in_names_dict[in_name]
+            for in_name in self.options['coeffs_dict']:
+                coeff = self.options['coeffs_dict'][in_name]
                 self.options['in_names'].append(in_name)
                 self.options['coeffs'].append(coeff)
         else:

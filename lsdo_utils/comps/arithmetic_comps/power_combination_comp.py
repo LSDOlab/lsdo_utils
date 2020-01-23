@@ -8,18 +8,23 @@ from lsdo_utils.miscellaneous_functions.process_options import scalar_types, get
 class PowerCombinationComp(ArrayExplicitComponent):
 
     def array_initialize(self):
-        self.options.declare('in_names', types=(dict, name_types))
         self.options.declare('out_name', types=str)
+        self.options.declare('in_names', default=None, types=name_types, allow_none=True)
         self.options.declare('powers', default=1., types=scalar_types)
-        self.options.declare('constant', default=1., types=(int, float, np.ndarray))
+        self.options.declare('powers_dict', default=None, types=dict, allow_none=True)
+        self.options.declare('coeff', default=1., types=(int, float, np.ndarray))
+
+    def post_initialize(self):
+        pass
 
     def array_setup(self):
-        if isinstance(self.options['in_names'], dict):
-            in_names_dict = self.options['in_names']
+        self.post_initialize()
+
+        if self.options['powers_dict']:
             self.options['in_names'] = []
             self.options['powers'] = []
-            for in_name in in_names_dict:
-                power = in_names_dict[in_name]
+            for in_name in self.options['powers_dict']:
+                power = self.options['powers_dict'][in_name]
                 self.options['in_names'].append(in_name)
                 self.options['powers'].append(power)
         else:
@@ -29,7 +34,7 @@ class PowerCombinationComp(ArrayExplicitComponent):
         in_names = self.options['in_names']
         out_name = self.options['out_name']
         powers = self.options['powers']
-        constant = self.options['constant']
+        coeff = self.options['coeff']
 
         self.array_add_output(out_name)
         for in_name in in_names:
@@ -40,9 +45,9 @@ class PowerCombinationComp(ArrayExplicitComponent):
         in_names = self.options['in_names']
         out_name = self.options['out_name']
         powers = self.options['powers']
-        constant = self.options['constant']
+        coeff = self.options['coeff']
         
-        outputs[out_name] = constant
+        outputs[out_name] = coeff
         for in_name, power in zip(in_names, powers):
             outputs[out_name] *= inputs[in_name] ** power
 
@@ -50,14 +55,14 @@ class PowerCombinationComp(ArrayExplicitComponent):
         in_names = self.options['in_names']
         out_name = self.options['out_name']
         powers = self.options['powers']
-        constant = self.options['constant']
+        coeff = self.options['coeff']
         
-        value = constant
+        value = coeff
         for in_name, power in zip(in_names, powers):
             value *= inputs[in_name] ** power
 
         for in_name in in_names:
-            deriv = constant * np.ones(self.options['shape'])
+            deriv = coeff * np.ones(self.options['shape'])
             for in_name2, power in zip(in_names, powers):
                 a = 1.
                 b = power
@@ -88,7 +93,7 @@ if __name__ == '__main__':
         in_names=['x', 'y', 'z'],
         out_name='f',
         powers=[1., -2., 3.],
-        constant=1.5,
+        coeff=1.5,
     )
     prob.model.add_subsystem('comp', comp, promotes=['*'])
 
