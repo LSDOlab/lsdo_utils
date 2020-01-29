@@ -42,7 +42,7 @@ class OptionsDictionary(object):
 
         self.initialize()
         self.update(kwargs)
-        self.post_initialize()
+        self.pre_setup()
 
     def add(self, child):
         self.children.append(child)
@@ -50,7 +50,7 @@ class OptionsDictionary(object):
     def initialize(self):
         pass
 
-    def post_initialize(self):
+    def pre_setup(self):
         pass
 
     def __repr__(self):

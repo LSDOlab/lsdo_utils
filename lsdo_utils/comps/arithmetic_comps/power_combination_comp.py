@@ -14,11 +14,16 @@ class PowerCombinationComp(ArrayExplicitComponent):
         self.options.declare('powers_dict', default=None, types=dict, allow_none=True)
         self.options.declare('coeff', default=1., types=(int, float, np.ndarray))
 
+        self.post_initialize()
+
     def post_initialize(self):
         pass
 
+    def pre_setup(self):
+        pass
+
     def array_setup(self):
-        self.post_initialize()
+        self.pre_setup()
 
         if self.options['powers_dict']:
             self.options['in_names'] = []

@@ -1,10 +1,20 @@
 from lsdo_utils.comps.array_explicit_component import ArrayExplicitComponent
+from lsdo_utils.comps.bracketed_implicit_comp import BracketedImplicitComp
+
 from lsdo_utils.comps.arithmetic_comps.general_operation_comp import GeneralOperationComp
 from lsdo_utils.comps.arithmetic_comps.linear_combination_comp import LinearCombinationComp
 from lsdo_utils.comps.arithmetic_comps.power_combination_comp import PowerCombinationComp
 from lsdo_utils.comps.arithmetic_comps.linear_power_combination_comp import LinearPowerCombinationComp
 
+from lsdo_utils.comps.arithmetic_comps.elementwise_max_comp import ElementwiseMaxComp
+from lsdo_utils.comps.arithmetic_comps.elementwise_min_comp import ElementwiseMinComp
+
+from lsdo_utils.comps.array_comps.scalar_expansion_comp import ScalarExpansionComp
+from lsdo_utils.comps.array_comps.array_expansion_comp import ArrayExpansionComp
+
 from lsdo_utils.miscellaneous_functions.units import units
 
 from lsdo_utils.miscellaneous.options_dictionary import OptionsDictionary
+from lsdo_utils.miscellaneous.simple_types import float_types
+
 import lsdo_utils.miscellaneous.constants as constants
