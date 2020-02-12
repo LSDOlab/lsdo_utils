@@ -6,26 +6,26 @@ from lsdo_utils.miscellaneous_functions.get_array_indices import get_array_indic
 from lsdo_utils.miscellaneous_functions.decompose_shape_tuple import decompose_shape_tuple
 
 
-class ArrayExpansionComp(ExplicitComponent):
+class ArrayContractionComp(ExplicitComponent):
 
     def initialize(self):
         self.options.declare('shape', types=tuple)
-        self.options.declare('expand_indices', types=list)
+        self.options.declare('contract_indices', types=list)
         self.options.declare('in_name', types=str)
         self.options.declare('out_name', types=str)
 
     def setup(self):
         shape = self.options['shape']
-        expand_indices = self.options['expand_indices']
+        contract_indices = self.options['contract_indices']
         in_name = self.options['in_name']
         out_name = self.options['out_name']
 
         (
-            in_string, ones_string, out_string,
-            in_shape, ones_shape, out_shape,
-        ) = decompose_shape_tuple(shape, expand_indices)
+            out_string, ones_string, in_string,
+            out_shape, ones_shape, in_shape,
+        ) = decompose_shape_tuple(shape, contract_indices)
 
-        einsum_string = '{},{}->{}'.format(in_string, ones_string, out_string)
+        einsum_string = '{},{}->{}'.format(out_string, ones_string, in_string)
 
         self.add_input(in_name, shape=in_shape)
         self.add_output(out_name, shape=out_shape)
@@ -33,39 +33,37 @@ class ArrayExpansionComp(ExplicitComponent):
         in_indices = get_array_indices(*in_shape)
         out_indices = get_array_indices(*out_shape)
 
-        self.einsum_string = einsum_string
-        self.ones_shape = ones_shape
-
-        rows = out_indices.flatten()
-        cols = np.einsum(einsum_string, in_indices, np.ones(ones_shape, int)).flatten()
+        rows = np.einsum(einsum_string, out_indices, np.ones(ones_shape, int)).flatten()
+        cols = in_indices.flatten()
         self.declare_partials(out_name, in_name, val=1., rows=rows, cols=cols)
 
     def compute(self, inputs, outputs):
         in_name = self.options['in_name']
         out_name = self.options['out_name']
+        contract_indices = self.options['contract_indices']
 
-        outputs[out_name] = np.einsum(self.einsum_string, inputs[in_name], np.ones(self.ones_shape))
+        outputs[out_name] = np.sum(inputs[in_name], axis=tuple(contract_indices))
 
 
 if __name__ == '__main__':
     from openmdao.api import Problem, IndepVarComp
 
     shape = (3, 2, 4)
-    expand_indices = [0, 1]
+    contract_indices = [0, 1]
 
     prob = Problem()
 
     comp = IndepVarComp()
-    comp.add_output('in_name', np.random.rand(4))
+    comp.add_output('in_name', np.random.random(shape))
     prob.model.add_subsystem('inputs_comp', comp, promotes=['*'])
 
-    comp = ArrayExpansionComp(
+    comp = ArrayContractionComp(
         shape=shape, 
-        expand_indices=expand_indices,
+        contract_indices=contract_indices,
         out_name='out_name',
         in_name='in_name', 
     )
-    prob.model.add_subsystem('array_expansion_comp', comp, promotes=['*'])
+    prob.model.add_subsystem('array_contraction_comp', comp, promotes=['*'])
     
     prob.setup(check=True)
     prob.run_model()

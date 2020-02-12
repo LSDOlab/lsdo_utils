@@ -93,12 +93,24 @@ if __name__ == '__main__':
     comp.add_output('z', np.random.rand(*shape))
     prob.model.add_subsystem('inputs_comp', comp, promotes=['*'])
 
+    # comp = PowerCombinationComp(
+    #     shape=shape,
+    #     out_name='f',
+    #     in_names=['x', 'y', 'z'],
+    #     powers=[1., -2., 3.],
+    #     coeff=1.5,
+    # )
+    # prob.model.add_subsystem('comp', comp, promotes=['*'])
+
     comp = PowerCombinationComp(
         shape=shape,
-        in_names=['x', 'y', 'z'],
         out_name='f',
-        powers=[1., -2., 3.],
-        coeff=1.5,
+        # coeff=1.5,
+        powers_dict=dict(
+            x=0.5,
+            # y=-2.,
+            # z=3.,
+        )
     )
     prob.model.add_subsystem('comp', comp, promotes=['*'])
 
