@@ -6,14 +6,27 @@ from lsdo_utils.miscellaneous_functions.process_options import scalar_types, get
 
 
 class LinearPowerCombinationComp(ArrayExplicitComponent):
-
     def array_initialize(self):
         self.options.declare('out_name', types=str)
-        self.options.declare('in_names', default=None, types=name_types, allow_none=True)
-        self.options.declare('powers', default=None, types=np.ndarray, allow_none=True)
-        self.options.declare('terms_list', default=None, types=list, allow_none=True)
-        self.options.declare('constant', default=0., types=(int, float, np.ndarray))
-        self.options.declare('coeffs', default=None, types=(list, np.ndarray), allow_none=True)
+        self.options.declare('in_names',
+                             default=None,
+                             types=name_types,
+                             allow_none=True)
+        self.options.declare('powers',
+                             default=None,
+                             types=np.ndarray,
+                             allow_none=True)
+        self.options.declare('terms_list',
+                             default=None,
+                             types=list,
+                             allow_none=True)
+        self.options.declare('constant',
+                             default=0.,
+                             types=(int, float, np.ndarray))
+        self.options.declare('coeffs',
+                             default=None,
+                             types=(list, np.ndarray),
+                             allow_none=True)
 
         self.post_initialize()
 
@@ -38,14 +51,14 @@ class LinearPowerCombinationComp(ArrayExplicitComponent):
                 in_name_to_ivar[in_name] = counter
                 counter += 1
 
-            powers = np.zeros(( len(terms_list), len(in_name_to_ivar) ))
+            powers = np.zeros((len(terms_list), len(in_name_to_ivar)))
             for iterm, (coeff, power_dict) in enumerate(terms_list):
                 for in_name in power_dict:
                     ivar = in_name_to_ivar[in_name]
 
                     powers[iterm, ivar] = power_dict[in_name]
 
-            coeffs = np.zeros( len(terms_list) )
+            coeffs = np.zeros(len(terms_list))
             for iterm, (coeff, power_dict) in enumerate(terms_list):
                 coeffs[iterm] = coeff
 
@@ -71,13 +84,13 @@ class LinearPowerCombinationComp(ArrayExplicitComponent):
         powers = self.options['powers']
         constant = self.options['constant']
         coeffs = self.options['coeffs']
-        
+
         outputs[out_name] = constant
         for iterm in range(powers.shape[0]):
             term = coeffs[iterm] * np.ones(outputs[out_name].shape)
             for ivar, in_name in enumerate(in_names):
                 power = powers[iterm, ivar]
-                term *= inputs[in_name] ** power
+                term *= inputs[in_name]**power
 
             outputs[out_name] += term
 
@@ -101,7 +114,7 @@ class LinearPowerCombinationComp(ArrayExplicitComponent):
                         a = power
                         b = power - 1.
 
-                    term *= a * inputs[in_name2] ** b
+                    term *= a * inputs[in_name2]**b
 
                 deriv += term
 
@@ -111,11 +124,10 @@ class LinearPowerCombinationComp(ArrayExplicitComponent):
 if __name__ == '__main__':
     from openmdao.api import Problem, IndepVarComp
 
-
     shape = (2, 3, 4)
 
     prob = Problem()
-    
+
     comp = IndepVarComp()
     comp.add_output('x', np.random.rand(*shape))
     comp.add_output('y', np.random.rand(*shape))
@@ -148,4 +160,5 @@ if __name__ == '__main__':
     x = prob['x']
     y = prob['y']
     z = prob['z']
-    print(0.5 + 1.5 * x**1 * y**2 * z**3 + 2. * x**4.5 * y**5 * z**6 - prob['f'])
+    print(0.5 + 1.5 * x**1 * y**2 * z**3 + 2. * x**4.5 * y**5 * z**6 -
+          prob['f'])

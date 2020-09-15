@@ -1,18 +1,25 @@
 import numpy as np
 
 from lsdo_utils.comps.array_explicit_component import ArrayExplicitComponent
-from lsdo_utils.miscellaneous_functions.process_options import name_types, get_names_list
-from lsdo_utils.miscellaneous_functions.process_options import scalar_types, get_scalars_list
+from lsdo_utils.miscellaneous_functions.process_options import (
+    get_names_list, get_scalars_list, name_types, scalar_types)
 
 
 class LinearCombinationComp(ArrayExplicitComponent):
-
     def array_initialize(self):
         self.options.declare('out_name', types=str)
-        self.options.declare('in_names', default=None, types=name_types, allow_none=True)
+        self.options.declare('in_names',
+                             default=None,
+                             types=name_types,
+                             allow_none=True)
         self.options.declare('coeffs', default=1., types=scalar_types)
-        self.options.declare('coeffs_dict', default=None, types=dict, allow_none=True)
-        self.options.declare('constant', default=0., types=(int, float, np.ndarray))
+        self.options.declare('coeffs_dict',
+                             default=None,
+                             types=dict,
+                             allow_none=True)
+        self.options.declare('constant',
+                             default=0.,
+                             types=(int, float, np.ndarray))
 
         self.post_initialize()
 
@@ -34,7 +41,8 @@ class LinearCombinationComp(ArrayExplicitComponent):
                 self.options['coeffs'].append(coeff)
         else:
             self.options['in_names'] = get_names_list(self.options['in_names'])
-            self.options['coeffs'] = get_scalars_list(self.options['coeffs'], self.options['in_names'])
+            self.options['coeffs'] = get_scalars_list(self.options['coeffs'],
+                                                      self.options['in_names'])
 
         in_names = self.options['in_names']
         out_name = self.options['out_name']
@@ -43,7 +51,7 @@ class LinearCombinationComp(ArrayExplicitComponent):
 
         self.array_add_output(out_name)
         for in_name, coeff in zip(in_names, coeffs):
-            self.array_add_input(in_name)
+            self.array_add_input(in_name, val=0)
             self.array_declare_partials(out_name, in_name, val=coeff)
 
     def compute(self, inputs, outputs):
@@ -51,7 +59,7 @@ class LinearCombinationComp(ArrayExplicitComponent):
         out_name = self.options['out_name']
         coeffs = self.options['coeffs']
         constant = self.options['constant']
-        
+
         outputs[out_name] = constant
         for in_name, coeff in zip(in_names, coeffs):
             outputs[out_name] += coeff * inputs[in_name]
@@ -60,11 +68,10 @@ class LinearCombinationComp(ArrayExplicitComponent):
 if __name__ == '__main__':
     from openmdao.api import Problem, IndepVarComp
 
-
     shape = (2, 3, 4)
 
     prob = Problem()
-    
+
     comp = IndepVarComp()
     comp.add_output('x', np.random.rand(*shape))
     comp.add_output('y', np.random.rand(*shape))
